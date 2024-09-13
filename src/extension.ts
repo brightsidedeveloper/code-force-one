@@ -26,26 +26,23 @@ export function activate(context: vscode.ExtensionContext) {
     }, 5000);
   });
 
-  vscode.workspace.onDidOpenTextDocument(() => {
-    addEditorDecorations({ contentText: '📂 Document Opened XP: 5', color: 'cyan' });
-    gainXP(5);
-  });
-
-  vscode.workspace.onDidChangeTextDocument(() => {
-    gainXP(1);
-  });
-
-  vscode.window.onDidChangeTextEditorSelection(() => {
-    highlightSelectedLine('rgba(0, 255, 0, 0.1)'); // Highlight the selected line
-  });
-
   const test = () => {};
 
   const disposables = [
     vscode.commands.registerCommand('code-force-one.clockIn', clockIn),
     vscode.commands.registerCommand('code-force-one.test', test),
+    vscode.workspace.onDidOpenTextDocument(() => {
+      addEditorDecorations({ contentText: '📂 Document Opened XP: 5', color: 'cyan' });
+      gainXP(5);
+    }),
+    vscode.workspace.onDidChangeTextDocument(() => {
+      gainXP(1);
+    }),
+    vscode.window.onDidChangeTextEditorSelection(() => {
+      highlightSelectedLine('rgba(0, 255, 0, 0.1)');
+    }),
   ];
-  disposables.forEach((disposable) => context.subscriptions.push(disposable));
+  context.subscriptions.push(...disposables);
 
   function getStats(): Stats {
     return context.globalState.get('stats', { xp: 0, level: 1, streak: 0, linesOfCode: 0 });
@@ -69,10 +66,9 @@ export function activate(context: vscode.ExtensionContext) {
   }
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {
   if (statusBarItem) {
-    statusBarItem.dispose(); // Dispose of the status bar item when the extension is deactivated
+    statusBarItem.dispose();
   }
 }
 
@@ -90,7 +86,6 @@ function getXPForNextLevel(level: number): number {
   return Math.floor(BASE_XP * Math.pow(level, GROWTH_RATE));
 }
 
-// Function to update the existing status bar item
 function updateStatusBarItem(stats: Stats) {
   if (statusBarItem) {
     statusBarItem.text = `🔥 Level: ${stats.level} XP: ${stats.xp} / ${getXPForNextLevel(stats.level)} 👨‍💻`;
@@ -103,25 +98,21 @@ const highlightSelectedLine = (color: string) => {
     return; // No active editor
   }
 
-  // Define the decoration style using the provided color
   const decorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: color,
-    isWholeLine: true, // Highlight the entire line
+    isWholeLine: true,
   });
 
-  // Get the current cursor position (selected line)
   const cursorPosition = activeEditor.selection.active.line;
 
-  // Create the range for the current line
   const lineRange = activeEditor.document.lineAt(cursorPosition).range;
 
-  // Apply the decoration to the current line
   activeEditor.setDecorations(decorationType, [lineRange]);
 
-  // Set a timeout to clear the decoration after 3 seconds
   setTimeout(() => {
-    activeEditor.setDecorations(decorationType, []); // Clear decorations
-  }, 500); // 3000 ms = 3 seconds
+    activeEditor.setDecorations(decorationType, []);
+    decorationType.dispose();
+  }, 500);
 };
 
 function addEditorDecorations({
@@ -134,14 +125,13 @@ function addEditorDecorations({
   fontWeight?: string;
 }) {
   const activeEditor = vscode.window.activeTextEditor;
+
   if (!activeEditor) {
-    return; // No active editor
+    return;
   }
 
-  // Get the current cursor position
   const cursorPosition = activeEditor.selection.active.line;
 
-  // Define the decoration style
   const decorationType = vscode.window.createTextEditorDecorationType({
     after: {
       contentText,
@@ -151,12 +141,11 @@ function addEditorDecorations({
     overviewRulerLane: vscode.OverviewRulerLane.Right,
   });
 
-  // Create the decoration at the current cursor line
   const position = activeEditor.document.lineAt(cursorPosition).range;
   activeEditor.setDecorations(decorationType, [{ range: position }]);
 
-  // Set a timeout to clear the decoration after 3 seconds
   setTimeout(() => {
-    activeEditor.setDecorations(decorationType, []); // Clear decorations
-  }, 3000); // 3000 ms = 3 seconds
+    activeEditor.setDecorations(decorationType, []);
+    decorationType.dispose();
+  }, 3000);
 }
