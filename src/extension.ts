@@ -38,9 +38,9 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeTextDocument(() => {
       gainXP(1);
     }),
-    vscode.window.onDidChangeTextEditorSelection(() => {
-      highlightSelectedLine('rgba(0, 255, 0, 0.1)');
-    }),
+    // vscode.window.onDidChangeTextEditorSelection(() => {
+    //   highlightSelectedLine('rgba(0, 255, 0, 0.01)');
+    // }),
   ];
   context.subscriptions.push(...disposables);
 
